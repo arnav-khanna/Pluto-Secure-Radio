@@ -40,7 +40,6 @@ def make_pluto(config: DeviceConfig) -> "Pluto":
     sdr.tx_rf_bandwidth = int(config.rf_bandwidth_hz)
     sdr.tx_hardwaregain_chan0 = float(config.tx_gain_db)
     sdr.rx_buffer_size = int(config.rx_buffer_size)
-
     if config.rx_gain_db == "auto":
         sdr.gain_control_mode_chan0 = "slow_attack"
     else:

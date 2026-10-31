@@ -11,6 +11,7 @@
 | Payload compression | Raw, Zstandard, Brotli, or adaptive auto mode |
 | Radio framing | 2-FSK, preamble, 16-bit PHY length, CRC-32 |
 | ACK | Dedicated short nonce ACK for low latency |
+| Waveform | 16 samples/symbol |
 
 > Important: the JSON printed by `pluto_json_radio.tx` is a local diagnostic
 > view. It is not a JSON serialization of the radio frame and it is not the
@@ -199,6 +200,14 @@ It carries no sender ID, payload, compression information, routing fields, or
 sender signature. Keeping it short and simple is what allows rapid ACK
 detection and retransmission decisions.
 
+## Waveform profile
+
+Both named deployments use the same 16-sample-per-symbol 2-FSK waveform as the
+known-good Pluto deployment.  The encrypted V2 bytes are independent of this
+sample timing, but both radios must use the same PHY profile.  The active
+configuration therefore sets `compatibility_samples_per_symbol: []` and sends
+one 16-sample waveform per packet.
+
 ## Operational requirements
 
 - Both folders must run this same secure V2 layout.
@@ -207,3 +216,7 @@ detection and retransmission decisions.
 - Restart receivers after changing keys or this packet format.
 - The encrypted 64-byte signature and 16-byte GCM tag are intentional fixed
   airtime overhead for confidentiality and sender authentication.
+
+## Optional JT transport (separate wire format)
+
+The new `json_transport` package uses `JT`, version 1, alongside this unchanged V2 implementation. Its fixed 18-byte header is magic (2), version (1), kind/ACK-request flags (1), source (1), destination (1), random message ID (8), fragment index (2), and count (2), all integers in network byte order. A 4-byte CRC32 covers header and payload. The PHY adds a 2-byte length and the existing BFSK preamble. DATA carries fragments of a once-encoded JSON envelope: compression (1), encryption (1), signature flag (1), original JSON byte length (4), then optional AES-GCM nonce/ciphertext/tag and optional 64-byte Ed25519 signature. ACK carries a 32-bit bitmap and one delivery-complete byte, plus optional authentication. HELLO/HELLO_ACK exchange a 16-byte session salt, optional pinned X25519 public key, and optional authentication. See TRANSPORT.md and json_transport/wire.py for details. JT receivers and V2 receivers are selected separately; there is no automatic protocol downgrade.

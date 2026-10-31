@@ -9,16 +9,17 @@ device:
 
 phy:
   preamble_hex: "5555555555555555d391ac6f"
-  samples_per_symbol: 8
+  samples_per_symbol: 16
+  compatibility_samples_per_symbol: []
   tone_deviation_hz: 125000
   max_payload_bytes: 512
-  initial_burst_copies: 1
+  initial_burst_copies: 2
   ack_burst_copies: 2
   ack_followup_count: 3
   ack_followup_gap_seconds: 0.006
-  max_preamble_bit_errors: 2
-  capture_seconds: 0.012
-  rx_overlap_seconds: 0.02
+  max_preamble_bit_errors: 4
+  capture_seconds: 0.025
+  rx_overlap_seconds: 0.04
   max_resends: 4
   ack_wait_seconds: 0.18
 

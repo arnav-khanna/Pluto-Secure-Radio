@@ -9,3 +9,7 @@ captures/
 *.key
 configs/pluto.local.yaml
 configs/pluto.example.yaml
+
+# Optional JSON transport local overrides and shared secrets
+configs/transport.local.yaml
+*.aes-key

@@ -27,6 +27,7 @@ class DeviceConfig:
 class PhyConfig:
     preamble_hex: str
     samples_per_symbol: int
+    compatibility_samples_per_symbol: tuple[int, ...]
     tone_deviation_hz: float
     max_payload_bytes: int
     initial_burst_copies: int
@@ -96,6 +97,9 @@ def load_config(path: str | Path) -> AppConfig:
         phy=PhyConfig(
             preamble_hex=str(_require(phy, "preamble_hex")).replace(" ", ""),
             samples_per_symbol=int(_require(phy, "samples_per_symbol")),
+            compatibility_samples_per_symbol=_parse_compatibility_samples(
+                phy.get("compatibility_samples_per_symbol", [])
+            ),
             tone_deviation_hz=float(_require(phy, "tone_deviation_hz")),
             max_payload_bytes=int(_require(phy, "max_payload_bytes")),
             initial_burst_copies=max(1, int(_require(phy, "initial_burst_copies"))),
@@ -154,6 +158,22 @@ def _parse_max_resends(value: Any) -> int:
     # One initial transmission plus four resends preserves the five-broadcast
     # ceiling of this protocol.
     return min(resends, MAX_RESENDS)
+
+
+def _parse_compatibility_samples(value: Any) -> tuple[int, ...]:
+    """Return distinct legacy waveform symbol durations, preserving order."""
+    if value is None:
+        return ()
+    if not isinstance(value, list):
+        raise ValueError("phy.compatibility_samples_per_symbol must be a list")
+    profiles: list[int] = []
+    for item in value:
+        samples = int(item)
+        if samples <= 0:
+            raise ValueError("compatibility waveform samples_per_symbol must be positive")
+        if samples not in profiles:
+            profiles.append(samples)
+    return tuple(profiles)
 
 
 def _optional_string(value: Any) -> str | None:

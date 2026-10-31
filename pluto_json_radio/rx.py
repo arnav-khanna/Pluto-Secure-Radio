@@ -67,6 +67,9 @@ def main(argv: list[str] | None = None) -> int:
     overlap_samples = int(config.device.sample_rate_hz * config.phy.rx_overlap_seconds)
 
     while True:
+        # Collect a complete capture before demodulating.  This proven path
+        # keeps a whole burst together and avoids skipping packets between
+        # throttled scan windows.
         fresh_iq = receive_samples(sdr, config.phy.capture_seconds)
         iq = np.concatenate((overlap, fresh_iq)) if overlap.size else fresh_iq
         candidates = find_packets(
@@ -130,6 +133,9 @@ def main(argv: list[str] | None = None) -> int:
             # Only the addressed receiver sends an ACK.  Duplicates are ACKed
             # again, because the prior ACK may have been lost.
             if addressed_to_me and isinstance(message.get("sender_address"), str):
+                # Respond in the waveform that carried this request.  This is
+                # what lets an updated 32-sample receiver serve a 16-sample
+                # legacy sender during a staged rollout.
                 ack_iq = _ack_iq(message, config, preamble)
                 for ack_index in range(config.phy.ack_followup_count):
                     transmit_once(sdr, ack_iq)
